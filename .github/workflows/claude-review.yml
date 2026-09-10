@@ -1,0 +1,69 @@
+name: Claude Review
+
+# Reusable workflow: reviews the calling repository's pull request with the
+# code-review skill in this repo (.claude/skills/code-review). Findings are
+# posted as inline comments on the diff, with a summary comment when nothing
+# is found. Runs against the Claude subscription behind CLAUDE_CODE_OAUTH_TOKEN
+# (org secret), so the only added cost is Actions minutes.
+#
+# Call it from a repo with:
+#
+#   on:
+#     pull_request:
+#       types: [opened, synchronize, reopened, ready_for_review]
+#   jobs:
+#     review:
+#       uses: TruFin-io/.github/.github/workflows/claude-review.yml@main
+#       secrets: inherit
+
+on:
+  workflow_call:
+    inputs:
+      model:
+        description: Model for the orchestrating agent; review sub-agents pick their own tier
+        type: string
+        default: claude-opus-5
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # One review at a time per PR. A new push queues behind the running
+    # review instead of cancelling it.
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch the shared review skill
+        uses: actions/checkout@v6
+        with:
+          repository: TruFin-io/.github
+          path: .trufin-shared
+          persist-credentials: false
+
+      - name: Install the skill into the reviewed repo
+        run: |
+          mkdir -p .claude/skills
+          cp -r .trufin-shared/.claude/skills/code-review .claude/skills/
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          allowed_bots: "dependabot[bot]"
+          prompt: "/code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          # The action starts the inline-comment MCP server only when
+          # --allowedTools names it, even though the skill frontmatter does too.
+          claude_args: --model ${{ inputs.model }} --allowedTools "mcp__github_inline_comment__create_inline_comment"
