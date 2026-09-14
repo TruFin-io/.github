@@ -14,11 +14,12 @@ To do this, follow these steps precisely:
 
 1. Launch a haiku agent to check if any of the following are true:
    - The pull request is closed
+   - The pull request is a draft
    - The pull request does not need code review (e.g. automated PR, trivial change that is obviously correct)
 
    If any condition is true, stop and do not proceed.
 
-Note: Still review Claude generated PRs and draft PRs. This review runs on every push, so a PR that was reviewed earlier is reviewed again for its new head commit.
+Note: Still review Claude generated PRs. This review runs on every push, so a PR that was reviewed earlier is reviewed again for its new head commit.
 
 2. Launch a haiku agent to return a list of file paths (not their contents) for all relevant CLAUDE.md files including:
    - The root CLAUDE.md file, if it exists

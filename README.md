@@ -18,8 +18,9 @@ that does not define its own.
   `CLAUDE_CODE_OAUTH_TOKEN` secret, so it bills the Claude subscription.
 - **`.claude/skills/code-review/SKILL.md`** – the review skill that workflow
   runs. It is copied into the reviewed repo at run time, so a repo's own
-  `CLAUDE.md` files drive the compliance checks. Reviews drafts, re-reviews
-  on every push, and updates its summary comment in place.
+  `CLAUDE.md` files drive the compliance checks. Skips drafts (the first
+  review runs when a PR is marked ready), re-reviews on every push, and
+  updates its summary comment in place.
   Based on Anthropic's [`plugins/code-review/commands/code-review.md`](https://github.com/anthropics/claude-code/blob/main/plugins/code-review/commands/code-review.md),
   copied at commit [`db8834b`](https://github.com/anthropics/claude-code/blob/db8834ba1d72e9a26fba30ac85f3bc4316bb0689/plugins/code-review/commands/code-review.md).
   To check for upstream changes:

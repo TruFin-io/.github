@@ -29,6 +29,8 @@ on:
 
 jobs:
   review:
+    # Drafts are skipped; marking a PR ready for review triggers the first run.
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # One review at a time per PR. A new push queues behind the running
