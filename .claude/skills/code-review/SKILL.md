@@ -62,13 +62,13 @@ Note: Still review Claude generated PRs. This review runs on every push, so a PR
 
    If `--comment` argument was NOT provided, stop here. Do not post any GitHub comments.
 
-   If `--comment` argument IS provided and NO issues were found, post the summary comment and stop. If an earlier run already left a comment starting with `## Code review` on this PR (find it with `gh api repos/<owner>/<repo>/issues/<PR>/comments`), update that comment in place with `gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id> -f body=...` instead of posting a new one.
+   If `--comment` argument IS provided and NO issues were found, post the summary comment and stop. End the body with the marker `<!-- trufin-claude-review -->` so later runs can find it. If an earlier run already left a comment on this PR that contains that marker and was written by the same author as this run (find it with `gh api repos/<owner>/<repo>/issues/<PR>/comments`), update that comment in place with `gh api --method PATCH repos/<owner>/<repo>/issues/comments/<id> -f body=...` instead of posting a new one. A comment without the marker belongs to someone else: never edit it.
 
    If `--comment` argument IS provided and issues were found, continue to step 8.
 
 8. Create a list of all comments that you plan on leaving. This is only for you to make sure you are comfortable with the comments. Do not post this list anywhere.
 
-   Then fetch the inline comments already on the PR with `gh api repos/<owner>/<repo>/pulls/<PR>/comments` and drop from your list any issue that an earlier run already reported on the same lines. An issue that was fixed since it was reported needs no new comment.
+   Then fetch the inline comments already on the PR with `gh api repos/<owner>/<repo>/pulls/<PR>/comments` and drop from your list any issue an earlier run already reported — the same file, the same lines, and the same underlying problem. A different problem on a line that already carries a comment is still worth reporting. An issue that was fixed since it was reported needs no new comment.
 
 9. Post inline comments for each issue using `mcp__github_inline_comment__create_inline_comment` with `confirmed: true`. For each comment:
    - Provide a brief description of the issue

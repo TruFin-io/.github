@@ -58,7 +58,8 @@ jobs:
       - name: Install the skill into the reviewed repo
         run: |
           mkdir -p .claude/skills
-          cp -r .trufin-shared/.claude/skills/code-review .claude/skills/
+          rm -rf .claude/skills/code-review
+          cp -r .trufin-shared/.claude/skills/code-review .claude/skills/code-review
 
       - uses: anthropics/claude-code-action@v1
         with:
