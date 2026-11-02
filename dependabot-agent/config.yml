@@ -33,24 +33,36 @@ skip_claude_for: [patch, minor]
 claude:
   enabled: true
   model: sonnet
-  max_turns: 30
+  max_turns: 50
   allowed_tools:
     - Read
     - Glob
     - Grep
     - Edit
     - Write
+    - WebFetch(domain:github.com)
+    - WebFetch(domain:raw.githubusercontent.com)
     - Bash(npm ci)
     - Bash(npm install:*)
     - Bash(npm ls:*)
+    - Bash(npm view:*)
+    - Bash(npm explain:*)
     - Bash(npm run:*)
+    - Bash(npx vitest:*)
     - Bash(pnpm install:*)
+    - Bash(pnpm add:*)
     - Bash(pnpm ls:*)
+    - Bash(pnpm why:*)
     - Bash(pnpm run:*)
     - Bash(yarn install:*)
+    - Bash(yarn add:*)
+    - Bash(yarn why:*)
     - Bash(yarn run:*)
     - Bash(bun install:*)
+    - Bash(bun add:*)
+    - Bash(bun pm ls:*)
     - Bash(bun run:*)
+    - Bash(bunx vitest:*)
 
 allowed_paths:
   - "**/package.json"
