@@ -1,0 +1,91 @@
+ecosystems: [npm, pnpm, yarn, bun]
+
+checks:
+  npm:
+    - { name: install, run: npm ci }
+    - { name: dep tree, run: npm ls --all }
+    - { name: lint, run: npm run lint, if_script: lint }
+    - { name: typecheck, run: npm run typecheck, if_script: typecheck }
+    - { name: test, run: npm run test, if_script: test }
+    - { name: build, run: npm run build, if_script: build }
+  pnpm:
+    - { name: install, run: pnpm install --frozen-lockfile }
+    - { name: dep tree, run: pnpm ls --depth Infinity }
+    - { name: lint, run: pnpm run lint, if_script: lint }
+    - { name: typecheck, run: pnpm run typecheck, if_script: typecheck }
+    - { name: test, run: pnpm run test, if_script: test }
+    - { name: build, run: pnpm run build, if_script: build }
+  yarn:
+    - { name: install, run: yarn install --immutable || yarn install --frozen-lockfile }
+    - { name: lint, run: yarn run lint, if_script: lint }
+    - { name: typecheck, run: yarn run typecheck, if_script: typecheck }
+    - { name: test, run: yarn run test, if_script: test }
+    - { name: build, run: yarn run build, if_script: build }
+  bun:
+    - { name: install, run: bun install --frozen-lockfile }
+    - { name: lint, run: bun run lint, if_script: lint }
+    - { name: typecheck, run: bun run typecheck, if_script: typecheck }
+    - { name: test, run: bun run test, if_script: test }
+    - { name: build, run: bun run build, if_script: build }
+
+skip_claude_for: [patch, minor]
+
+claude:
+  enabled: true
+  model: sonnet
+  max_turns: 30
+  allowed_tools:
+    - Read
+    - Glob
+    - Grep
+    - Edit
+    - Write
+    - Bash(npm ci)
+    - Bash(npm install:*)
+    - Bash(npm ls:*)
+    - Bash(npm run:*)
+    - Bash(pnpm install:*)
+    - Bash(pnpm ls:*)
+    - Bash(pnpm run:*)
+    - Bash(yarn install:*)
+    - Bash(yarn run:*)
+    - Bash(bun install:*)
+    - Bash(bun run:*)
+
+allowed_paths:
+  - "**/package.json"
+  - "**/package-lock.json"
+  - "**/pnpm-lock.yaml"
+  - "**/yarn.lock"
+  - "**/bun.lock"
+  - "**/bun.lockb"
+  - "**/.eslintrc*"
+  - "**/eslint.config.*"
+  - "**/.prettierrc*"
+  - "**/prettier.config.*"
+  - "**/tsconfig*.json"
+  - "**/*.js"
+  - "**/*.jsx"
+  - "**/*.mjs"
+  - "**/*.cjs"
+  - "**/*.ts"
+  - "**/*.tsx"
+
+forbidden_paths:
+  - ".github/**"
+  - "**/.env*"
+  - "**/*.pem"
+  - "**/*.key"
+
+test_paths:
+  - "**/*.test.*"
+  - "**/*.spec.*"
+  - "**/__tests__/**"
+
+forbidden_patterns:
+  - { pattern: "eslint-disable", reason: adds eslint-disable }
+  - { pattern: "@ts-(ignore|expect-error|nocheck)", reason: adds a TypeScript suppression }
+  - { pattern: "\\b(describe|it|test)\\.(skip|only)\\b", reason: skips or focuses tests }
+  - { pattern: "\\bx(it|describe|test)\\(", reason: skips tests }
+  - { pattern: "\"strict\"\\s*:\\s*false", reason: loosens TypeScript strict mode, paths: ["**/tsconfig*.json"] }
+  - { pattern: "[\"'](off|warn)[\"']|:\\s*[01]\\b", reason: turns lint rules off, paths: ["**/.eslintrc*", "**/eslint.config.*"] }

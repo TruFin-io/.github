@@ -11,6 +11,9 @@ that does not define its own.
   vulnerability findings. Aligned with the
   [Vulnerability Management Policy](https://github.com/TruFin-io/docs) SLAs
   (Critical 1d / High 3d / Medium 7d / Low 30d).
+- **`.github/workflows/dependabot-agent.yml`** – reusable workflow that checks
+  and fixes Dependabot PRs with Claude. See
+  [`dependabot-agent/README.md`](dependabot-agent/README.md).
 
 
 ## Adding to this repo
