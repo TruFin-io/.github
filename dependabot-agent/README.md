@@ -8,11 +8,10 @@ When Dependabot opens or updates a PR, the repo's small caller workflow runs [`.
 
 1. Checks out the PR head and this repo's `dependabot-agent/` tooling.
 2. Runs the checks for every directory whose `package.json` or lockfile changed (`config.yml`, plus the repo override).
-3. All green and a patch/minor bump: label `dep-agent:verified`, no Claude call.
-4. Anything failing, or a major bump: runs `anthropics/claude-code-action` with `SKILL.md`. Claude checks related and peer packages, reads changelogs for breaking changes (without trusting semver), runs the repo's checks, makes obvious fixes, and ends with `VERDICT: ok | fixed | needs-human` plus a short review. It can edit files, run package-manager commands and read GitHub release pages. It cannot run git.
-5. Re-runs the checks and runs the guardrail diff check (no `eslint-disable`, `@ts-ignore`, skipped or deleted tests, workflow/env files, or paths outside `allowed_paths`).
-6. If green, clean and Claude did not ask for a human: commits and pushes to the Dependabot branch with the Claude App token. The push triggers the repo's normal CI.
-7. Posts or updates one comment, and sets `dep-agent:verified`, `dep-agent:fixed` or `dep-agent:needs-human`.
+3. Runs `anthropics/claude-code-action` with `SKILL.md` on every bump. Patch and minor releases can break too, so nothing is skipped. Majors get extra scrutiny. Claude checks related and peer packages, reads changelogs for breaking changes (without trusting semver), runs the repo's checks, makes obvious fixes, and ends with `VERDICT: ok | fixed | needs-human` plus a short review. It can edit files, run package-manager commands and read GitHub release pages. It cannot run git.
+4. Re-runs the checks and runs the guardrail diff check (no `eslint-disable`, `@ts-ignore`, skipped or deleted tests, workflow/env files, or paths outside `allowed_paths`).
+5. If green, clean and Claude did not ask for a human: commits and pushes to the Dependabot branch with the Claude App token. The push triggers the repo's normal CI.
+6. Posts or updates one comment, and sets `dep-agent:verified`, `dep-agent:fixed` or `dep-agent:needs-human`.
 
 Claude's own push re-triggers the caller with actor `claude[bot]`, which the caller skips, so there is no loop.
 

@@ -28,8 +28,6 @@ checks:
     - { name: test, run: bun run test, if_script: test }
     - { name: build, run: bun run build, if_script: build }
 
-skip_claude_for: [patch, minor]
-
 claude:
   enabled: true
   model: sonnet

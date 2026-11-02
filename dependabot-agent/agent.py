@@ -180,7 +180,7 @@ def cmd_check(a):
     before = run_checks(cfg, dirs)
     git("add", "-A")
     git("-c", "user.name=baseline", "-c", "user.email=baseline@localhost", "commit", "-q", "--allow-empty", "--no-verify", "-m", "baseline")
-    needs_claude = cfg["claude"]["enabled"] and (bool(failing(before)) or bump["level"] not in cfg["skip_claude_for"])
+    needs_claude = bool(cfg["claude"]["enabled"])
     state = {
         "repo": repo, "pr": int(pr), "head_sha": os.environ["HEAD_SHA"], "head_ref": os.environ["HEAD_REF"],
         "baseline_sha": git("rev-parse", "HEAD").strip(),
