@@ -2,6 +2,11 @@ name: Dependabot agent
 
 on:
   workflow_call:
+    inputs:
+      pr_number:
+        description: Run on this existing Dependabot PR instead of the triggering event
+        type: string
+        required: false
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: false
@@ -10,24 +15,45 @@ on:
 
 jobs:
   agent:
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]'
+    if: >-
+      inputs.pr_number != '' ||
+      (github.event.pull_request.user.login == 'dependabot[bot]' && github.actor == 'dependabot[bot]')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     concurrency:
-      group: dep-agent-${{ github.repository }}-${{ github.event.pull_request.number }}
+      group: dep-agent-${{ github.repository }}-${{ inputs.pr_number || github.event.pull_request.number }}
       cancel-in-progress: true
     env:
       AGENT_DIR: ${{ github.workspace }}/.dependabot-agent/dependabot-agent
-      PR_NUMBER: ${{ github.event.pull_request.number }}
-      PR_TITLE: ${{ github.event.pull_request.title }}
-      PR_BODY: ${{ github.event.pull_request.body }}
-      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-      HEAD_REF: ${{ github.event.pull_request.head.ref }}
       GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Resolve PR
+        env:
+          INPUT_PR: ${{ inputs.pr_number }}
+        run: |
+          if [ -n "$INPUT_PR" ]; then
+            pr=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR")
+          else
+            pr=$(jq .pull_request "$GITHUB_EVENT_PATH")
+          fi
+          if [ "$(jq -r .user.login <<<"$pr")" != "dependabot[bot]" ] || [ "$(jq -r .state <<<"$pr")" != "open" ]; then
+            echo "::error::PR #$(jq -r .number <<<"$pr") is not an open Dependabot PR"
+            exit 1
+          fi
+          eof=$(openssl rand -hex 8)
+          {
+            echo "PR_NUMBER=$(jq -r .number <<<"$pr")"
+            echo "HEAD_SHA=$(jq -r .head.sha <<<"$pr")"
+            echo "HEAD_REF=$(jq -r .head.ref <<<"$pr")"
+            echo "PR_TITLE=$(jq -r .title <<<"$pr")"
+            echo "PR_BODY<<$eof"
+            jq -r '.body // ""' <<<"$pr"
+            echo "$eof"
+          } >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
 
       - uses: actions/checkout@v5
@@ -84,5 +110,5 @@ jobs:
         run: python3 "$AGENT_DIR/agent.py" push
 
       - name: Report
-        if: always() && steps.check.outputs.proceed != 'false'
+        if: always() && env.HEAD_SHA != '' && steps.check.outputs.proceed != 'false'
         run: python3 "$AGENT_DIR/agent.py" report

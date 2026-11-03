@@ -25,10 +25,15 @@ Claude's own push re-triggers the caller with actor `claude[bot]`, which the cal
    on:
      pull_request:
        types: [opened, reopened, synchronize]
+     workflow_dispatch:
+       inputs:
+         pr_number:
+           description: Existing Dependabot PR number
+           required: true
 
    jobs:
      dependabot-agent:
-       if: github.actor == 'dependabot[bot]'
+       if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
        permissions:
          contents: write
          pull-requests: write
@@ -36,8 +41,12 @@ Claude's own push re-triggers the caller with actor `claude[bot]`, which the cal
          id-token: write
          actions: read
        uses: TruFin-io/.github/.github/workflows/dependabot-agent.yml@main
+       with:
+         pr_number: ${{ inputs.pr_number }}
        secrets: inherit
    ```
+
+   To run it on an existing Dependabot PR: Actions → Dependabot agent → Run workflow, and enter the PR number (or `gh workflow run dependabot-agent.yml -R TruFin-io/<repo> -f pr_number=<n>`). Manual runs are started by you, not Dependabot, so they read **Actions** secrets: `CLAUDE_CODE_OAUTH_TOKEN` must exist as an Actions secret too.
 
 2. Make sure the repo has a `.github/dependabot.yml`.
 3. Make sure the Claude GitHub App is installed on the repo.
