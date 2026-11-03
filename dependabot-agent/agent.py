@@ -10,6 +10,10 @@ from pathlib import Path
 from urllib.parse import quote
 
 MARKER = "<!-- dep-agent -->"
+BANNER = (
+    "> [!NOTE]\n> 🛡️ **TruFin Dependabot Agent**, the org-wide review from "
+    "[TruFin-io/.github](https://github.com/TruFin-io/.github/tree/main/dependabot-agent)"
+)
 LABELS = {
     "verified": ("dep-agent:verified", "0e8a16", "Dependabot agent: checks green, no changes needed"),
     "fixed": ("dep-agent:fixed", "1d76db", "Dependabot agent: pushed a fix, checks green locally"),
@@ -289,7 +293,7 @@ def render(state, status):
     ups = bump["updates"]
     fmt = lambda u: f"`{u['name']}` {u['from']} → {u['to']} ({u['level']}, {u['type']})"
     bump_line = fmt(ups[0]) if len(ups) == 1 else f"{len(ups) or 'unknown number of'} updates, highest level {bump['level']}"
-    out = [f"### 🤖 Dependabot agent: {TITLES[status]}", "", f"**Bump:** {bump_line}", ""]
+    out = [BANNER, "", f"### Dependabot agent: {TITLES[status]}", "", f"**Bump:** {bump_line}", ""]
     if len(ups) > 1:
         out += ["<details><summary>Updates</summary>\n", *[f"- {fmt(u)}" for u in ups], "\n</details>", ""]
     before = {(r["dir"], r["name"]): r["status"] for r in state["before"]}
@@ -345,7 +349,7 @@ def cmd_report(a):
     if state is None:
         status = "needs-human"
         run_url = f"{os.environ['GITHUB_SERVER_URL']}/{repo}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
-        body = f"### 🤖 Dependabot agent: Needs human\n\nThe agent failed before running checks. See the [agent run]({run_url}).\n{MARKER}"
+        body = f"{BANNER}\n\n### Dependabot agent: Needs human\n\nThe agent failed before running checks. See the [agent run]({run_url}).\n{MARKER}"
     else:
         status = status_of(state)
         body = render(state, status)
