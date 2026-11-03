@@ -22,8 +22,10 @@ LABELS = {
 TITLES = {"verified": "Verified", "fixed": "Fixed", "needs-human": "Needs human"}
 LOCKFILES = {
     "bun.lock": "bun", "bun.lockb": "bun", "pnpm-lock.yaml": "pnpm",
-    "yarn.lock": "yarn", "package-lock.json": "npm",
+    "yarn.lock": "yarn", "package-lock.json": "npm", "Cargo.lock": "cargo",
 }
+MANIFESTS = ("package.json", "Cargo.toml", *LOCKFILES)
+TEST_CASE_RE = re.compile(r"\b(it|test)\(|#\[(\w+::)?test\b")
 LEVELS = ["patch", "minor", "major", "unknown"]
 ICONS = {"pass": "✅", "fail": "❌", "skipped": "➖", None: ""}
 BUMP = r"\[?`?(@?[\w./-]+?)`?\]?(?:\([^)]*\))?\s+from\s+`?v?([\w.+-]+?)`?\s+to\s+`?v?([\w.+-]+?)`?(?=[\s,]|\.?$|\.\s)"
@@ -108,9 +110,14 @@ def classify(title, body):
 def run_checks(cfg, dirs):
     results = []
     env = {k: v for k, v in os.environ.items() if k not in ("GH_TOKEN", "GITHUB_TOKEN")}
+    cargo_roots = []
     for d in dirs:
         wd = Path(d)
-        eco = next((e for f, e in LOCKFILES.items() if (wd / f).exists()), "npm")
+        eco = next((e for f, e in LOCKFILES.items() if (wd / f).exists()), "cargo" if (wd / "Cargo.toml").exists() else "npm")
+        if eco == "cargo":
+            if any(r == Path(".") or r in wd.parents for r in cargo_roots):
+                continue
+            cargo_roots.append(wd)
         if eco not in cfg["ecosystems"]:
             results.append({"dir": d, "name": "ecosystem", "status": "skipped", "output": f"{eco} not enabled"})
             continue
@@ -170,7 +177,7 @@ def cmd_check(a):
     cfg["allowed_paths"] += override.get("allowed_paths") or []
     repo, pr = os.environ["GITHUB_REPOSITORY"], os.environ["PR_NUMBER"]
     files = api_lines(f"repos/{repo}/pulls/{pr}/files?per_page=100", ".[].filename")
-    dirs = sorted({str(Path(f).parent) for f in files if Path(f).name in ("package.json", *LOCKFILES)})
+    dirs = sorted({str(Path(f).parent) for f in files if Path(f).name in MANIFESTS})
     if not dirs:
         print("no supported manifest changed")
         write_output(proceed="false")
@@ -230,7 +237,7 @@ def guardrail(patch, cfg):
         if match(path, cfg["test_paths"]):
             if "\ndeleted file mode" in header:
                 violations.add(f"`{path}`: deletes a test file")
-            count = lambda ls: sum(len(re.findall(r"\b(it|test)\(", ln)) for ln in ls)
+            count = lambda ls: sum(len(TEST_CASE_RE.findall(ln)) for ln in ls)
             if count(removed) > count(added):
                 violations.add(f"`{path}`: removes test cases")
         for rule in cfg["forbidden_patterns"]:

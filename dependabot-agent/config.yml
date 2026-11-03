@@ -1,4 +1,4 @@
-ecosystems: [npm, pnpm, yarn, bun]
+ecosystems: [npm, pnpm, yarn, bun, cargo]
 
 checks:
   npm:
@@ -27,6 +27,11 @@ checks:
     - { name: typecheck, run: bun run typecheck, if_script: typecheck }
     - { name: test, run: bun run test, if_script: test }
     - { name: build, run: bun run build, if_script: build }
+  cargo:
+    - { name: dep tree, run: cargo tree --locked --workspace }
+    - { name: format, run: cargo fmt --all --check }
+    - { name: lint, run: cargo clippy --locked --workspace --all-targets }
+    - { name: test, run: cargo test --locked --workspace }
 
 claude:
   enabled: true
@@ -61,6 +66,18 @@ claude:
     - Bash(bun pm ls:*)
     - Bash(bun run:*)
     - Bash(bunx vitest:*)
+    - Bash(cargo build:*)
+    - Bash(cargo check:*)
+    - Bash(cargo test:*)
+    - Bash(cargo clippy:*)
+    - Bash(cargo fmt:*)
+    - Bash(cargo tree:*)
+    - Bash(cargo update:*)
+    - Bash(cargo metadata:*)
+    - Bash(make test)
+    - Bash(make build)
+    - WebFetch(domain:docs.rs)
+    - WebFetch(domain:crates.io)
 
 allowed_paths:
   - "**/package.json"
@@ -80,6 +97,9 @@ allowed_paths:
   - "**/*.cjs"
   - "**/*.ts"
   - "**/*.tsx"
+  - "**/Cargo.toml"
+  - "**/Cargo.lock"
+  - "**/*.rs"
 
 forbidden_paths:
   - ".github/**"
@@ -91,11 +111,14 @@ test_paths:
   - "**/*.test.*"
   - "**/*.spec.*"
   - "**/__tests__/**"
+  - "**/tests/**"
 
 forbidden_patterns:
   - { pattern: "eslint-disable", reason: adds eslint-disable }
   - { pattern: "@ts-(ignore|expect-error|nocheck)", reason: adds a TypeScript suppression }
   - { pattern: "\\b(describe|it|test)\\.(skip|only)\\b", reason: skips or focuses tests }
   - { pattern: "\\bx(it|describe|test)\\(", reason: skips tests }
+  - { pattern: "#!?\\[allow\\(", reason: adds a Rust lint suppression, paths: ["**/*.rs"] }
+  - { pattern: "#\\[ignore", reason: ignores Rust tests, paths: ["**/*.rs"] }
   - { pattern: "\"strict\"\\s*:\\s*false", reason: loosens TypeScript strict mode, paths: ["**/tsconfig*.json"] }
   - { pattern: "[\"'](off|warn)[\"']|:\\s*[01]\\b", reason: turns lint rules off, paths: ["**/.eslintrc*", "**/eslint.config.*"] }

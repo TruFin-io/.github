@@ -11,10 +11,11 @@ You are working on the checked-out branch of a Dependabot PR. Your job is to dec
 
 For every updated package:
 
-- Look for related packages that must move with it: peer dependencies, plugins, presets, type packages, and sibling packages from the same family or monorepo (e.g. `eslint` with `@eslint/js`, `typescript-eslint` and `eslint-plugin-*`; `react` with `react-dom` and `@types/react`; `vitest` with `@vitest/*`; `pylint` with `pylint-*` plugins).
-- Read the installed `package.json` of the new version and of its dependents in `node_modules` to compare `peerDependencies` and `engines`. `npm view <pkg>@<version> peerDependencies engines` works for any version.
+- Look for related packages that must move with it: peer dependencies, plugins, presets, type packages, and sibling packages from the same family or monorepo (e.g. `eslint` with `@eslint/js`, `typescript-eslint` and `eslint-plugin-*`; `react` with `react-dom` and `@types/react`; `vitest` with `@vitest/*`; `near-sdk` with `near-contract-standards` and `near-workspaces`; `pylint` with `pylint-*` plugins).
+- JS: read the installed `package.json` of the new version and of its dependents in `node_modules` to compare `peerDependencies` and `engines`. `npm view <pkg>@<version> peerDependencies engines` works for any version.
+- Rust: use `cargo tree --workspace -i <crate>` and `cargo tree -d` to find duplicate or mismatched versions, and check the crate's `rust-version` (MSRV).
 - Check the lockfile resolved one version of each family, not a mix.
-- Check the runtime still fits (`.nvmrc`, `engines`).
+- Check the runtime still fits (`.nvmrc`, `engines`, `rust-toolchain.toml`).
 
 ## 2. Check for breaking changes
 
@@ -39,7 +40,7 @@ Fix it when the answer is clear and mechanical:
 Rules:
 
 - Make the smallest change that works.
-- Never disable or loosen lint rules, TypeScript strictness or tests to get green. No `eslint-disable`, `@ts-ignore`, `.skip`, `.only`, or deleted tests.
+- Never disable or loosen lint rules, TypeScript strictness or tests to get green. No `eslint-disable`, `@ts-ignore`, `.skip`, `.only`, `#[allow(...)]`, `#[ignore]`, or deleted tests.
 - Never downgrade another dependency unless you explain why.
 - Do not touch `.github/`, env files or secrets.
 - After fixing, re-run the checks.

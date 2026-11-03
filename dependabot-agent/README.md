@@ -80,6 +80,6 @@ A repo can also add `.claude/skills/dependabot-triage/SKILL.md`, which is append
 ## Known gaps
 
 - Claude gets one session per run. It can re-run checks itself within its turn cap.
-- Checks only cover npm, pnpm, yarn and bun, with the lockfile next to the changed `package.json`.
+- Checks only cover npm, pnpm, yarn, bun and cargo. JS lockfiles must sit next to the changed `package.json`. Cargo checks run once at the top-most changed workspace.
 - The comment shows local check results. Target CI results show on the PR as usual.
 - After the agent pushes, Dependabot stops rebasing the PR, and `@dependabot recreate` wipes the agent commit.
